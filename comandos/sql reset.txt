@@ -1,0 +1,5 @@
+DELETE FROM games;
+DELETE FROM sqlite_sequence WHERE name='games';
+
+DELETE FROM mensajes;
+DELETE FROM sqlite_sequence WHERE name='mensajes';

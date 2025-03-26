@@ -1,0 +1,9 @@
+0	---------	
+1	----x----	x
+2	-o--x----	o
+3	-o—x---x	x
+4	oo—x---x	o
+5	oox-x---x	x
+6	oox-x-o-x	o
+7	oox-xxo-x	x
+8	oox-xxoox	error	

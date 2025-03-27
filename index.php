@@ -9,18 +9,18 @@ require_once "game.php";     // Carga la lógica del juego
 $db = getDB(); // Conexión a la base de datos
 
 // Obtiene la ruta de la solicitud
-$request = explode("/", trim(parse_url($_SERVER["REQUEST_URI"], PHP_URL_PATH), "/"));
+$request = explode("/", trim(parse_url($_SERVER["PATH_INFO"], PHP_URL_PATH), "/"));
 
 // Manejo de solicitudes
 switch ($_SERVER["REQUEST_METHOD"]) {
     case "POST":
-        if ($request[0] === "index.php" && isset($request[1]) && $request[1] === "create") {
+        if (isset($request[0]) && $request[0] === "create") {
             // Crear una nueva partida
             $stmt = $db->prepare("INSERT INTO games DEFAULT VALUES");
             $stmt->execute();
             echo json_encode(["game_id" => $db->lastInsertId(), "message" => "Partida creada"]);
             exit;
-        } elseif ($request[0] === "index.php" && isset($request[1]) && $request[1] === "move") {
+        } elseif (isset($request[0]) && $request[0] === "move") {
             // Recibir datos JSON del cliente
             $input = json_decode(file_get_contents("php://input"), true);
             if (!isset($input["game_id"], $input["position"], $input["player"])) {
@@ -56,10 +56,10 @@ switch ($_SERVER["REQUEST_METHOD"]) {
         break;
 
     case "GET":
-        if ($request[0] === "index.php" && isset($request[1]) && $request[1] === "game" && isset($request[2])) {
+        if (isset($request[0]) && $request[0] === "game" && isset($request[1])) {
             // Obtener el estado de una partida
             $stmt = $db->prepare("SELECT * FROM games WHERE id = ?");
-            $stmt->execute([$request[2]]);
+            $stmt->execute([$request[1]]);
             $game = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if (!$game) {

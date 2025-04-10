@@ -1,29 +1,47 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
 
-// Función para obtener la conexión a la base de datos SQLite
-function getDB() {
-    try {
-        $db = new PDO("sqlite:D:/proyecto/tres_en_raya/tic_tac_toe.db");
+function getDB()
+{
+    static $db = null;
+
+    if ($db === null) {
+        $db = new PDO('sqlite:' . __DIR__ . '/tic_tac_toe.db');
         $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        return $db;
-    } catch (PDOException $e) {
-        die(json_encode(["error" => "Error de conexión: " . $e->getMessage()]));
+
+        // Crear tabla board (si no existe)
+        $db->exec("CREATE TABLE IF NOT EXISTS board (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            board TEXT NOT NULL,
+            turn TEXT NOT NULL,
+            winner TEXT
+        )");
+
+        // Crear tabla status (si no existe)
+        $db->exec("CREATE TABLE IF NOT EXISTS status (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            label TEXT NOT NULL UNIQUE
+        )");
+
+        // Insertar estados iniciales si no existen
+        $statuses = ['waiting', 'active'];
+        foreach ($statuses as $label) {
+            $stmt = $db->prepare("SELECT COUNT(*) FROM status WHERE label = ?");
+            $stmt->execute([$label]);
+            if ($stmt->fetchColumn() == 0) {
+                $insert = $db->prepare("INSERT INTO status (label) VALUES (?)");
+                $insert->execute([$label]);
+            }
+        }
+
+        // Crear tabla games (si no existe)
+        $db->exec("CREATE TABLE IF NOT EXISTS games (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            board_id INTEGER NOT NULL,
+            status_id INTEGER NOT NULL,
+            FOREIGN KEY (board_id) REFERENCES board(id),
+            FOREIGN KEY (status_id) REFERENCES status(id)
+        )");
     }
-}
 
-// Crear la tabla si no existe
-function setupDatabase() {
-    $db = getDB();
-    $db->exec("CREATE TABLE IF NOT EXISTS games (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        board TEXT DEFAULT '---------',
-        turn CHAR(1) DEFAULT 'X',
-        winner CHAR(1) DEFAULT NULL
-    )");
+    return $db;
 }
-
-// Ejecutar la configuración de la base de datos
-setupDatabase();
-?>

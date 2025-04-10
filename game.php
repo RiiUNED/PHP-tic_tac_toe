@@ -1,44 +1,58 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
 
-// Función para verificar si hay un ganador en el tablero
-function checkWinner($board) {
-    $lines = [
-        [0,1,2], [3,4,5], [6,7,8], // Filas
-        [0,3,6], [1,4,7], [2,5,8], // Columnas
-        [0,4,8], [2,4,6]           // Diagonales
+function makeMove($game, $position, $player)
+{
+    $board = $game["board"];
+    $turn = $game["turn"];
+    $winner = $game["winner"];
+
+    // Validaciones básicas
+    if ($winner !== null && $winner !== '') {
+        return "La partida ya ha terminado.";
+    }
+
+    if ($player !== $turn) {
+        return "No es el turno del jugador $player.";
+    }
+
+    if (!is_numeric($position) || $position < 0 || $position > 8) {
+        return "Posición inválida.";
+    }
+
+    if ($board[$position] !== '-') {
+        return "La celda ya está ocupada.";
+    }
+
+    // Realizar el movimiento
+    $board[$position] = $player;
+
+    // Comprobar si alguien ha ganado
+    $winningCombos = [
+        [0,1,2], [3,4,5], [6,7,8], // filas
+        [0,3,6], [1,4,7], [2,5,8], // columnas
+        [0,4,8], [2,4,6]           // diagonales
     ];
 
-    foreach ($lines as $line) {
-        if ($board[$line[0]] != '-' && 
-            $board[$line[0]] == $board[$line[1]] && 
-            $board[$line[0]] == $board[$line[2]]) {
-            return $board[$line[0]]; // Retorna 'X' o 'O' si hay ganador
+    foreach ($winningCombos as $combo) {
+        if ($board[$combo[0]] === $player &&
+            $board[$combo[1]] === $player &&
+            $board[$combo[2]] === $player) {
+            $winner = $player;
+            break;
         }
     }
 
-    return (strpos($board, '-') === false) ? 'T' : null; // 'T' para empate, null si sigue el juego
-}
+    // Comprobar empate
+    if ($winner === null && strpos($board, '-') === false) {
+        $winner = "draw";
+    }
 
-// Función para realizar un movimiento en el juego
-function makeMove($game, $position, $player) {
-    if ($game['winner']) return "Partida terminada"; // Ya hay un ganador
-    if ($game['turn'] !== $player) return "No es tu turno";
-    if ($game['board'][$position] !== '-') return "Movimiento inválido";
-
-    // Actualizar el tablero con el nuevo movimiento
-    $board = $game['board'];
-    $board[$position] = $player;
-
-    // Verificar si hay un ganador
-    $winner = checkWinner($board);
+    // Cambiar el turno si la partida sigue
     $nextTurn = ($player === 'X') ? 'O' : 'X';
 
     return [
-        'board' => $board,
-        'winner' => $winner,
-        'turn' => $winner ? null : $nextTurn
+        "board" => $board,
+        "turn" => ($winner === null) ? $nextTurn : $turn,
+        "winner" => $winner
     ];
 }
-?>
